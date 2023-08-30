@@ -1,4 +1,4 @@
-function [x_transition,p1,four1,p2,four2,four_ns] = Nuclear_data_analysis_final(alpha, compress_smooth,compress_non_smooth,data)
+function [x_transition,p1,four1,p2,four2,four_ns,error,x,y,y_app] = Nuclear_data_analysis_final(compress_smooth,compress_non_smooth,alpha,data)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   INPUTS
 %
@@ -54,16 +54,16 @@ if nargin == 3
     data = 'ENDF_U_235_N_TOT_SIG.txt';
 elseif nargin == 2
     data = 'ENDF_U_235_N_TOT_SIG.txt';
-    compress_non_smooth = 0.2;
+    alpha = 0.0025;
 elseif nargin == 1
     data = 'ENDF_U_235_N_TOT_SIG.txt';
+    alpha = 0.0025;
     compress_non_smooth = 0.2;
-    compress_smooth = 0.2;
 elseif nargin == 0
     data = 'ENDF_U_235_N_TOT_SIG.txt';
-    compress_non_smooth = 0.2;
-    compress_smooth = 0.2;
     alpha = 0.0025;
+    compress_non_smooth = 0.2;
+    compress_smooth = 0.2; 
 end
 
 %% Importing and cleaning the data
@@ -104,12 +104,16 @@ p2 = Best_poly_fit(x2,y2); f2 = polyval(p2,x2);
 %% Approximate the remainder by a Fourier series
 [four1,s1] = Best_fourier_fit(x1,y1-f1,compress_smooth); four1 = sparse(four1);
 [four2,s2] = Best_fourier_fit(x2,y2-f2,compress_smooth); four2 = sparse(four2);
-s1 = s1(2:end-1); s2 = s2(2:end-1); f1 = f1(2:end-1); f2 = f2(2:end-1); 
-x1 = x1(2:end-1); x2 = x2(2:end-1); y1 = y1(2:end-1); y2 = y2(2:end-1); 
+%s1 = s1(2:end-1); s2 = s2(2:end-1); f1 = f1(2:end-1); f2 = f2(2:end-1); 
+%x1 = x1(2:end-1); x2 = x2(2:end-1); y1 = y1(2:end-1); y2 = y2(2:end-1); 
 
 %% Approximate the non-smooth section
 [four_ns,s_ns] = Best_fourier_fit(x_ns,y_ns,compress_non_smooth);
-s_ns = s_ns(2:end-1); x_ns = x_ns(2:end-1); y_ns = y_ns(2:end-1);
+%s_ns = s_ns(2:end-1); x_ns = x_ns(2:end-1); y_ns = y_ns(2:end-1);
+
+%% Calculate error
+error = [f1+s1-y1;s_ns-y_ns;f2+s2-y2];
+y_app = [y1;y_ns;y2];
 
 %% Plot the function
 subplot(2,1,1); plot(x1,f1+s1,'b-',x2,f2+s2,'b-',x_ns,s_ns,'b-',x,y,'r--'); xlabel('Position'); ylabel('Cross-section')
